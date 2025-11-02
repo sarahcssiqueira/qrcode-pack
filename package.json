@@ -1,0 +1,20 @@
+{
+  "name": "qrcode-pack",
+  "version": "0.1.0",
+  "description": "",
+  "homepage": "https://github.com/sarahcssiqueira/qrcode-pack#readme",
+  "bugs": {
+    "url": "https://github.com/sarahcssiqueira/qrcode-pack/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sarahcssiqueira/qrcode-pack.git"
+  },
+  "license": "MIT",
+  "author": "Sarah C. Siqueira",
+  "type": "module",
+  "main": "src/QRCodeGenerator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
