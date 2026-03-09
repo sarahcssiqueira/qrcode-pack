@@ -28,7 +28,20 @@ qr.renderToCanvas('myCanvas', 512);
 
 ## Props
 
-TO DO
+## Props
+
+| Prop / Method           | Type                        | Default | Description |
+|-------------------------|----------------------------|---------|-------------|
+| `text`                  | `string`                   | `""`    | The content to encode in the QR Code. |
+| `ecLevel`               | `"L" | "M" | "Q" | "H"`   | `"H"`   | Error correction level of the QR Code. `"L"` = low, `"H"` = high. |
+| `version`               | `number`                   | `null`  | QR Code version (1–40). Higher versions store more data. If `null`, the version is calculated automatically. |
+| `modules`               | `array`                    | `null`  | Internal matrix representing the QR Code modules (pixels). Populated after calling `buildMatrix()`. |
+| `reserved`              | `array`                    | `null`  | Reserved areas in the matrix, such as alignment patterns and format markers. |
+| `buildMatrix()`         | `function`                 | —       | Generates the internal QR Code matrix based on `text` and `ecLevel`. |
+| `renderToCanvas(canvasId, size)` | `function`         | —       | Renders the QR Code to an HTML `<canvas>`. `canvasId` = ID of the canvas, `size` = width/height in pixels. |
+
+> **Optional note:**  
+> Additional options may be added in future releases, such as custom colors, padding, or different rendering outputs.
 
 ## Contributing
 
