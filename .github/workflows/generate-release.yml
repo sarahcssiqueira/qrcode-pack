@@ -3,7 +3,7 @@ name: Generate release
 on:
   push:
     tags:
-      - 'v*'
+      - '*'
 
 jobs:
   build-and-release:
@@ -30,4 +30,4 @@ jobs:
           generate_release_notes: true
           make_latest: "true"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
