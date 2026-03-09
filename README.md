@@ -17,7 +17,14 @@ To install run:
 
 ## Usage
 
-TO DO
+````
+import QRCodeGenerator from 'qrcode-generator-js';
+
+const qr = new QRCodeGenerator('Hello World');
+qr.buildMatrix();
+qr.renderToCanvas('myCanvas', 512);
+
+````
 
 ## Props
 
