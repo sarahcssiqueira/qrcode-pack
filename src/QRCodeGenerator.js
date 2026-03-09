@@ -76,7 +76,8 @@ export default class QRCodeGenerator {
   buildDataBits(){
     const bits = [];
     bits.push(...this.numToBits(0b0100, 4)); // byte mode
-    bits.push(...this.numToBits(this.dataBytes.length, 8)); // length for v1-9
+    const lengthBits = this.version <= 9 ? 8 : 16;
+    bits.push(...this.numToBits(this.dataBytes.length, lengthBits));
     for(const b of this.dataBytes) bits.push(...this.numToBits(b,8));
     const capacityBits = this.getDataCapacityBits();
     const remaining = capacityBits - bits.length;
