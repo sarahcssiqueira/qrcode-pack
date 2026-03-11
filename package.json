@@ -13,8 +13,5 @@
   "license": "MIT",
   "author": "Sarah C. Siqueira",
   "type": "module",
-  "main": "src/QRCodeGenerator.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
+  "main": "/index.js"
 }
