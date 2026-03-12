@@ -37,13 +37,12 @@ export default class QRCodeData {
 
     toUtf8Bytes(str) { return Array.from(new TextEncoder().encode(str)); }
 
-    
     // Choose the smallest version that can fit the data for the given error correction level
     chooseVersion() {
         for (let v = 1; v <= 15; v++) {
             const verInfo = this.versionTable[v];
             const capacityBytes = verInfo[this.ecLevel];
-            // em byte mode, cada caractere UTF-8 ocupa 1 byte
+            // For simplicity, we only support byte mode and use the precomputed capacity in bytes from the version table
             if (this.dataBytes.length <= capacityBytes) {
                 this.version = v;
                 return;
@@ -57,17 +56,17 @@ export default class QRCodeData {
     buildDataBits() {
         const bits = [];
         
-        // 1) modo Byte
+        // 1) Byte mode mode indicator is 4 bits: 0100
         bits.push(...this.numToBits(0b0100, 4));
         
-        // 2) comprimento da mensagem
+        // 2) Length of data in bytes (8 bits for v1..v9, 16 bits for v10..v15)
         const lengthBits = this.version <= 9 ? 8 : 16;
         bits.push(...this.numToBits(this.dataBytes.length, lengthBits));
 
-        // 3) dados
+        // 3) Data bytes in binary
         for (const b of this.dataBytes) bits.push(...this.numToBits(b, 8));
 
-        // 4) terminator (até 4 zeros)
+        // 4) Terminator (up to 4 bits of 0)
         const capacityBits = this.getDataCapacityBits();
         const remaining = capacityBits - bits.length;
         if (remaining > 0) {
@@ -75,16 +74,16 @@ export default class QRCodeData {
             for (let i = 0; i < term; i++) bits.push(0);
         }
 
-        // 5) completa para múltiplo de 8
+        // 5) Pad with 0s to next byte if not already byte-aligned
         while (bits.length % 8 !== 0) bits.push(0);
 
-        // 6) transforma bits em bytes
+        // 6) Convert bits to bytes
         const dataBytes = [];
         for (let i = 0; i < bits.length; i += 8) {
             dataBytes.push(parseInt(bits.slice(i, i + 8).join(''), 2));
         }
 
-        // 7) adiciona bytes de padding alternando 0xEC, 0x11
+       // 7) Pad with alternating bytes 0xec and 0x11 until we reach the total data capacity in bytes for the version and error correction level
         const totalDataBytes = this.getDataCapacityBytes();
         const pads = [0xec, 0x11];
         let padIndex = 0;
@@ -95,7 +94,7 @@ export default class QRCodeData {
         return dataBytes;
     }
 
-    // Retunrn data capacity in bits for the current version and error correction level
+    // Return data capacity in bits for the current version and error correction level
     getDataCapacityBits() {
         const verInfo = this.versionTable[this.version];
         return verInfo[this.ecLevel] * 8;
@@ -112,12 +111,12 @@ export default class QRCodeData {
     getDataCapacityBits(){ const verInfo = this.versionTable[this.version]; const dataBytes = verInfo[this.ecLevel]; return dataBytes * 8; }
     getDataCapacityBytes(){ const verInfo = this.versionTable[this.version]; return verInfo[this.ecLevel]; }
 
-   // ECC
+    // ECC (Error Correction Code) generation using Reed-Solomon algorithm over GF(256)
     makeECC(dataBytes){
         const ver = this.versionTable[this.version];
         const total = ver.totalCodewords;
         const blocks = ver.blocks[this.ecLevel];
-        const dataCodewords = dataBytes.length; // already padded to capacity
+        const dataCodewords = dataBytes.length;
         // split data bytes across blocks as evenly as spec requires (distribute remainders to first blocks)
         const baseDataLen = Math.floor(dataCodewords / blocks);
         const dataRemainder = dataCodewords % blocks;
@@ -139,7 +138,7 @@ export default class QRCodeData {
         eccBlocks.push(ecc.slice(-ecLen));
         }
 
-        // interleave data bytes
+        // Interleave data bytes
         const interleaved = [];
         const maxDataLen = Math.max(...blockData.map(b=>b.length));
         for(let i=0;i<maxDataLen;i++){
@@ -147,7 +146,7 @@ export default class QRCodeData {
             if(i < blockData[b].length) interleaved.push(blockData[b][i]);
         }
         }
-        // interleave ecc bytes
+        // Interleave ECC bytes
         const maxEcLen = Math.max(...eccBlocks.map(b=>b.length));
         for(let i=0;i<maxEcLen;i++){
         for(let b=0;b<eccBlocks.length;b++){
