@@ -19,22 +19,27 @@ export default class GFMath {
     this.gfLog = log;
   }
 
+  // Addition in GF(256) is just XOR
   gfAdd(a,b){ return a ^ b; }
 
+  // Multiplication in GF(256) using log/exp tables for efficiency
   gfMul(a,b){ if(a===0||b===0) return 0; return this.gfExp[(this.gfLog[a]+this.gfLog[b])%255]; }
 
+  // Generate the Reed-Solomon generator polynomial for the given error correction length
   makeGenerator(ecLen){
     let gen=[1];
     for(let i=0;i<ecLen;i++){ gen = this.polyMul(gen,[1,this.gfExp[i]]); }
     return gen;
   }
 
+  // Polynomial multiplication in GF(256), used for generator creation and ECC calculation
   polyMul(a,b){
     const res = new Array(a.length + b.length -1).fill(0);
     for(let i=0;i<a.length;i++) for(let j=0;j<b.length;j++) res[i+j] ^= this.gfMul(a[i], b[j]);
     return res;
   }
 
+  // Polynomial division in GF(256), used to calculate ECC codewords from the message and generator
   polyDiv(message, generator){
     const msg = message.slice();
     for(let i=0;i<=message.length - generator.length;i++){

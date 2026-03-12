@@ -18,16 +18,13 @@ To install run:
 ## Usage
 
 ````
-import QRCodeGenerator from 'qrcode-generator-js';
+import QRCodeGenerator from 'qrcode-pack';
 
 const qr = new QRCodeGenerator('Hello World');
 qr.buildMatrix();
 qr.renderToCanvas('myCanvas', 512);
 
 ````
-
-## Props
-
 ## Props
 
 | Prop / Method           | Type                        | Default | Description |
@@ -39,9 +36,6 @@ qr.renderToCanvas('myCanvas', 512);
 | `reserved`              | `array`                    | `null`  | Reserved areas in the matrix, such as alignment patterns and format markers. |
 | `buildMatrix()`         | `function`                 | —       | Generates the internal QR Code matrix based on `text` and `ecLevel`. |
 | `renderToCanvas(canvasId, size)` | `function`         | —       | Renders the QR Code to an HTML `<canvas>`. `canvasId` = ID of the canvas, `size` = width/height in pixels. |
-
-> **Optional note:**  
-> Additional options may be added in future releases, such as custom colors, padding, or different rendering outputs.
 
 ## Contributing
 
