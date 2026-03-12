@@ -13,5 +13,5 @@
   "license": "MIT",
   "author": "Sarah C. Siqueira",
   "type": "module",
-  "main": "/index.js"
+  "main": "/QRCodeGenerator.js"
 }

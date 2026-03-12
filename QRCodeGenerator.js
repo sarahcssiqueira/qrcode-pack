@@ -6,7 +6,7 @@ export default class QRCodeGenerator {
   constructor(text, opts = {}) {
     this.text = text;
     this.ecLevel = (opts.ecLevel || 'H').toUpperCase();
-    this.data = new QRCodeData(this.text, this.ecLevel);
+    this.data = new QRCodeData(this.text, { ecLevel: this.ecLevel });
     this.matrix = new QRCodeMatrix(this.data.version, 17 + 4 * this.data.version);
     this.alignPositions = this.data.versionTable[this.data.version].align;
     this.renderer = null;
@@ -40,4 +40,6 @@ export default class QRCodeGenerator {
     this.renderer = new QRCodeRenderer(this.matrix.modules);
     this.renderer.renderToCanvas(canvasId);
   }
+
+  
 }
