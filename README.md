@@ -22,7 +22,7 @@ import QRCodeGenerator from 'qrcode-pack';
 
 const qr = new QRCodeGenerator('Hello World');
 qr.buildMatrix();
-qr.renderToCanvas('myCanvas', 512);
+qr.renderToCanvas('canvasID');
 
 ````
 ## Props
