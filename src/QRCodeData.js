@@ -1,5 +1,23 @@
 import GFMath from './GFMath.js';
 
+const RS_BLOCK_TABLE = {
+    1: { L: [1, 26, 19], M: [1, 26, 16], Q: [1, 26, 13], H: [1, 26, 9] },
+    2: { L: [1, 44, 34], M: [1, 44, 28], Q: [1, 44, 22], H: [1, 44, 16] },
+    3: { L: [1, 70, 55], M: [1, 70, 44], Q: [2, 35, 17], H: [2, 35, 13] },
+    4: { L: [1, 100, 80], M: [2, 50, 32], Q: [2, 50, 24], H: [4, 25, 9] },
+    5: { L: [1, 134, 108], M: [2, 67, 43], Q: [2, 33, 15, 2, 34, 16], H: [2, 33, 11, 2, 34, 12] },
+    6: { L: [2, 86, 68], M: [4, 43, 27], Q: [4, 43, 19], H: [4, 43, 15] },
+    7: { L: [2, 98, 78], M: [4, 49, 31], Q: [2, 32, 14, 4, 33, 15], H: [4, 39, 13, 1, 40, 14] },
+    8: { L: [2, 121, 97], M: [2, 60, 38, 2, 61, 39], Q: [4, 40, 18, 2, 41, 19], H: [4, 40, 14, 2, 41, 15] },
+    9: { L: [2, 146, 116], M: [3, 58, 36, 2, 59, 37], Q: [4, 36, 16, 4, 37, 17], H: [4, 36, 12, 4, 37, 13] },
+    10: { L: [2, 86, 68, 2, 87, 69], M: [4, 69, 43, 1, 70, 44], Q: [6, 43, 19, 2, 44, 20], H: [6, 43, 15, 2, 44, 16] },
+    11: { L: [4, 101, 81], M: [1, 80, 50, 4, 81, 51], Q: [4, 50, 22, 4, 51, 23], H: [3, 36, 12, 8, 37, 13] },
+    12: { L: [2, 116, 92, 2, 117, 93], M: [6, 58, 36, 2, 59, 37], Q: [4, 46, 20, 6, 47, 21], H: [7, 42, 14, 4, 43, 15] },
+    13: { L: [4, 133, 107], M: [8, 59, 37, 1, 60, 38], Q: [8, 44, 20, 4, 45, 21], H: [12, 33, 11, 4, 34, 12] },
+    14: { L: [3, 145, 115, 1, 146, 116], M: [4, 64, 40, 5, 65, 41], Q: [11, 36, 16, 5, 37, 17], H: [11, 36, 12, 5, 37, 13] },
+    15: { L: [5, 109, 87, 1, 110, 88], M: [5, 65, 41, 5, 66, 42], Q: [5, 54, 24, 7, 55, 25], H: [11, 36, 12, 7, 37, 13] },
+};
+
 export default class QRCodeData {
     constructor(text, opts = {}) {
         this.text = text;
@@ -35,15 +53,20 @@ export default class QRCodeData {
         
     }
 
-    toUtf8Bytes(str) { return Array.from(new TextEncoder().encode(str)); }
+    // Convert input text to UTF-8 byte array
+    toUtf8Bytes(str){
+        return Array.from(new TextEncoder().encode(str));
+    }
 
-    // Choose the smallest version that can fit the data for the given error correction level
-    chooseVersion() {
-        for (let v = 1; v <= 15; v++) {
+    // Determine the smallest QR code version that can accommodate the input data and error correction level
+    chooseVersion(){
+        for(let v=1; v<=15; v++){
             const verInfo = this.versionTable[v];
-            const capacityBytes = verInfo[this.ecLevel];
-            // For simplicity, we only support byte mode and use the precomputed capacity in bytes from the version table
-            if (this.dataBytes.length <= capacityBytes) {
+            const capacityBits = verInfo[this.ecLevel] * 8;
+            const lengthBits = v <= 9 ? 8 : 16;
+            const requiredBits = 4 + lengthBits + (this.dataBytes.length * 8);
+
+            if(requiredBits <= capacityBits){
                 this.version = v;
                 return;
             }
@@ -56,28 +79,20 @@ export default class QRCodeData {
     buildDataBits() {
         const bits = [];
         
-        // 1) Byte mode mode indicator is 4 bits: 0100
         bits.push(...this.numToBits(0b0100, 4));
         
-        // 2) Length of data in bytes (8 bits for v1..v9, 16 bits for v10..v15)
         const lengthBits = this.version <= 9 ? 8 : 16;
         bits.push(...this.numToBits(this.dataBytes.length, lengthBits));
 
-        // 3) Data bytes in binary
         for (const b of this.dataBytes) bits.push(...this.numToBits(b, 8));
 
-        // 4) Terminator (up to 4 bits of 0)
         const capacityBits = this.getDataCapacityBits();
         const remaining = capacityBits - bits.length;
         if (remaining > 0) {
             const term = Math.min(4, remaining);
             for (let i = 0; i < term; i++) bits.push(0);
         }
-
-        // 5) Pad with 0s to next byte if not already byte-aligned
         while (bits.length % 8 !== 0) bits.push(0);
-
-        // 6) Convert bits to bytes
         const dataBytes = [];
         for (let i = 0; i < bits.length; i += 8) {
             dataBytes.push(parseInt(bits.slice(i, i + 8).join(''), 2));
@@ -88,7 +103,8 @@ export default class QRCodeData {
         const pads = [0xec, 0x11];
         let padIndex = 0;
         while (dataBytes.length < totalDataBytes) {
-            dataBytes.push(pads[padIndex++ % 2]);
+            dataBytes.push(pads[padIndex % 2]);
+            padIndex++;
         }
 
         return dataBytes;
@@ -106,52 +122,89 @@ export default class QRCodeData {
         return verInfo[this.ecLevel];
     }
 
-    numToBits(num,len){ const a=[]; for(let i=len-1;i>=0;i--) a.push((num>>i)&1); return a; }
-    // Use the capacity (bytes) precomputed in versionTable for byte mode
-    getDataCapacityBits(){ const verInfo = this.versionTable[this.version]; const dataBytes = verInfo[this.ecLevel]; return dataBytes * 8; }
-    getDataCapacityBytes(){ const verInfo = this.versionTable[this.version]; return verInfo[this.ecLevel]; }
+    numToBits(num,len){
+        const arr = [];
+        for(let i=len-1;i>=0;i--)
+            arr.push((num >> i) & 1);
+        return arr;
+    }
 
-    // ECC (Error Correction Code) generation using Reed-Solomon algorithm over GF(256)
-    makeECC(dataBytes){
-        const ver = this.versionTable[this.version];
-        const total = ver.totalCodewords;
-        const blocks = ver.blocks[this.ecLevel];
-        const dataCodewords = dataBytes.length;
-        // split data bytes across blocks as evenly as spec requires (distribute remainders to first blocks)
-        const baseDataLen = Math.floor(dataCodewords / blocks);
-        const dataRemainder = dataCodewords % blocks;
-        const blockData = [];
-        let offset = 0;
-        for(let b=0;b<blocks;b++){
-        const len = baseDataLen + (b < dataRemainder ? 1 : 0);
-        blockData.push(dataBytes.slice(offset, offset + len));
-        offset += len;
+    getRSBlocks(){
+        const rsEntry = RS_BLOCK_TABLE[this.version]?.[this.ecLevel];
+
+        if(!rsEntry)
+            throw new Error(`Missing RS block data for version ${this.version} ${this.ecLevel}`);
+
+        const blocks = [];
+
+        for(let i = 0; i < rsEntry.length; i += 3){
+            const count = rsEntry[i];
+            const totalCount = rsEntry[i + 1];
+            const dataCount = rsEntry[i + 2];
+
+            for(let blockIndex = 0; blockIndex < count; blockIndex++){
+                blocks.push({
+                    totalCount,
+                    dataCount,
+                    ecCount: totalCount - dataCount,
+                });
+            }
         }
 
-        // ECC per block is specified in the table (same for all blocks for v1..v4)
+        return blocks;
+    }
+
+    makeECC(dataBytes){
+        const rsBlocks = this.getRSBlocks();
+        const blockData = [];
+        let offset = 0;
+
+        for(const block of rsBlocks){
+            const chunk = dataBytes.slice(offset, offset + block.dataCount);
+
+            if(chunk.length !== block.dataCount)
+                throw new Error(`Invalid data block layout for version ${this.version} ${this.ecLevel}`);
+
+            blockData.push(chunk);
+            offset += block.dataCount;
+        }
+
+        if(offset !== dataBytes.length)
+            throw new Error(`Unassigned data codewords for version ${this.version} ${this.ecLevel}`);
+
         const eccBlocks = [];
-        const ecLen = ver.ecCodewordsPerBlock[this.ecLevel];
-        for(let b=0;b<blocks;b++){
-        const generator = this.gfmath.makeGenerator(ecLen);
-        const msg = blockData[b].concat(new Array(generator.length - 1).fill(0));
-        const ecc = this.gfmath.polyDiv(msg, generator);
-        eccBlocks.push(ecc.slice(-ecLen));
+        const generators = new Map();
+
+        for(let b=0;b<rsBlocks.length;b++){
+            const ecLen = rsBlocks[b].ecCount;
+            let generator = generators.get(ecLen);
+
+            if(!generator){
+                generator = this.gfmath.makeGenerator(ecLen);
+                generators.set(ecLen, generator);
+            }
+
+            const msg = blockData[b].concat(new Array(ecLen).fill(0));
+            const ecc = this.gfmath.polyDiv(msg,generator);
+            eccBlocks.push(ecc.slice(-ecLen));
         }
 
         // Interleave data bytes
         const interleaved = [];
         const maxDataLen = Math.max(...blockData.map(b=>b.length));
         for(let i=0;i<maxDataLen;i++){
-        for(let b=0;b<blockData.length;b++){
-            if(i < blockData[b].length) interleaved.push(blockData[b][i]);
-        }
+            for(let b=0;b<blockData.length;b++){
+                if(i < blockData[b].length)
+                    interleaved.push(blockData[b][i]);
+            }
         }
         // Interleave ECC bytes
-        const maxEcLen = Math.max(...eccBlocks.map(b=>b.length));
+        const maxEcLen = Math.max(...eccBlocks.map(block => block.length));
         for(let i=0;i<maxEcLen;i++){
-        for(let b=0;b<eccBlocks.length;b++){
-            if(i < eccBlocks[b].length) interleaved.push(eccBlocks[b][i]);
-        }
+            for(let b=0;b<eccBlocks.length;b++){
+                if(i < eccBlocks[b].length)
+                    interleaved.push(eccBlocks[b][i]);
+            }
         }
         return interleaved;
     }
