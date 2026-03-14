@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![NPM Version](https://img.shields.io/npm/v/qrcode-pack)](https://www.npmjs.com/package/qrcode-pack)
 [![Release Version](https://img.shields.io/github/release/sarahcssiqueira/qrcode-pack.svg?color)](https://github.com/sarahcssiqueira/qrcode-pack/releases/latest)
+[![Support Level](https://img.shields.io/badge/support-may_take_time-yellow.svg)](#support-level)
 
 
 ## Installation
