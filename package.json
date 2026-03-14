@@ -13,5 +13,15 @@
   "license": "MIT",
   "author": "Sarah C. Siqueira",
   "type": "module",
-  "main": "/QRCodeGenerator.js"
+  "main": "/QRCodeGenerator.js",
+  "keywords": [
+    "qrcode",
+    "qr-code",
+    "qr-code-generator",
+    "qr-code-generator-js",
+    "qr-code-library",
+    "javascript",
+    "js",
+    "typescript"
+  ]
 }
